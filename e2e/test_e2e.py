@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from typing import Union
 
 import requests
 
@@ -16,7 +17,7 @@ url = "https://data-proxy.ebrains.eu/api/v1/buckets/reference-atlas-data/sparse-
 def local_si_name():
     name = "foo"
 
-    def download(url: str, dest: str | Path):
+    def download(url: str, dest: Union[str, Path]):
         resp = requests.get(url)
         resp.raise_for_status()
         with open(dest, "wb") as fp:

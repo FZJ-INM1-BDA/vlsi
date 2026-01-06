@@ -3,21 +3,10 @@ from typing import Union, Literal, List, Dict, Tuple, ContextManager, Callable
 from collections import defaultdict
 from collections.abc import Iterable
 import gzip
-from contextlib import contextmanager
-from functools import partial
 from io import BufferedReader
 
 import numpy as np
 import nibabel as nib
-
-
-@contextmanager
-def open_context(filepath: str | Path, mode="rb"):
-    try:
-        with open(filepath, mode) as fp:
-            yield fp
-    finally:
-        ...
 
 
 class SpatialIndexWriteExc(Exception):
