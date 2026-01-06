@@ -1,0 +1,22 @@
+name: '[tests]'
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: "Install deps"
+      run: |
+        pip install .[dev]
+    - name: "Run e2e tests"
+      run: pytest e2e/

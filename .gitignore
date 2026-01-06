@@ -1,0 +1,44 @@
+# Virtual environments
+env/
+.venv/
+venv/
+venv
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / Editor specific files
+.idea/
+.vscode/
+.PyCharm/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Local configuration files and logs
+.env
+.env.local
+.env.*.local
+*.sqlite3
+*.db
+*.log
+*.journal
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Virtualenv package directory
+site-packages/
+
+# Built packages
+dist/
+build/
+
+# Install directories
+*.egg-info
+install/
+pip-wheel-metadata/

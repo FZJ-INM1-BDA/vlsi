@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vlsi"
+version = "0.0.1"
+description = "variable length spatial index"
+authors = [
+    {name = "Xiao Gui", email = "xgui3783@gmail.com"}
+]
+# license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "nibabel",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "flake8", "pylint", "requests"]
+
+# [project.urls]
+# Homepage = "https://github.com/your-username/your-project-name"
+
+[tool.setuptools]
+packages = ["vlsi"]
+
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 88
+
+[tool.pylint]
+max-line-length = 88
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "broad-except",
+    "consider-using-f-string",
+]
