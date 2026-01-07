@@ -7,6 +7,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    - name: "Install deps"
+      run: |
+        pip install .[dev]
+    - name: "Run lint"
+      run: flake8 vlsi
+  unittests:
+    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    - name: "Install deps"
+      run: |
+        pip install .[dev]
+    - name: "Run unit_tests"
+      run: pytest unit_tests/
+
   e2e:
     runs-on: ubuntu-latest
     steps:

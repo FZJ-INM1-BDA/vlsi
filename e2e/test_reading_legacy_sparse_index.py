@@ -8,7 +8,7 @@ from typing import Union
 
 import requests
 
-from vlsi.base import ReadableSpatialIndex
+from vlsi import ReadableSpatialIndex
 
 url = "https://data-proxy.ebrains.eu/api/v1/buckets/reference-atlas-data/sparse-indices/colin27-jba30-hg"
 
@@ -68,6 +68,7 @@ def remote_spatial_index():
             if path == url + ReadableSpatialIndex.ATTR_SUFFIX:
                 self.url = url + ".sparseindex.probs.txt"
                 return
+            raise Exception(f"{path}")
 
         def read(self, bytes):
 

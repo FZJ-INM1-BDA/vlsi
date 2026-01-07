@@ -22,32 +22,38 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "flake8", "pylint", "requests"]
+dev = ["pytest", "flake8", "pylint", "requests", "Flake8-pyproject"]
 
 # [project.urls]
-# Homepage = "https://github.com/your-username/your-project-name"
+# Homepage = "https://github.com/xgui3783/vlsi"
 
 [tool.setuptools]
 packages = ["vlsi"]
 
 [tool.black]
 line-length = 88
-target-version = ["py38"]
+target-version = ["py39"]
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 88
 
-[tool.pylint]
-max-line-length = 88
-disable = [
-    "missing-module-docstring",
-    "missing-class-docstring",
-    "missing-function-docstring",
-    "broad-except",
-    "consider-using-f-string",
+[tool.flake8]
+per-file-ignores = [
+    "__init__.py:F401,E402",
+]
+# Ignoring:
+# E501: line too long
+# W503: Line break occurred before a binary operator https://www.flake8rules.com/rules/W503.html
+# n.b. PEP now recommends linebreak BEFORE operator. see https://peps.python.org/pep-0008/#should-a-line-break-before-or-after-a-binary-operator
+# E731: do not assign a lambda expression, use a def
+# E203: Whitespace before ':' (E203). (E203 is not PEP 8 compliant and auto formatter will break it)
+
+ignore = [
+    "E203", # Whitespace before ':' (handled by Black)
+    "E501", # Line too long (handled by Black)
+    "W503", # Line break before binary operator (handled by Black)
+    "E731", # Unused import
+]
+exclude = [
+    "venv",
+    ".git",
+    "__pycache__"
 ]
