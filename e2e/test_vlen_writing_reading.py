@@ -10,7 +10,10 @@ import pytest
 import requests
 import nibabel as nib
 import numpy as np
-from numcodecs import VLenBytes
+try:
+    from numcodecs import VLenBytes
+except ImportError:
+    pytest.skip("numcodec not installed, skip vlen e2e test", allow_module_level=True)
 
 
 def _decode_data(b: bytes):
