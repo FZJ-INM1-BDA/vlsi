@@ -1,26 +1,22 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools", "setuptools_scm[toml]"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "vlsi"
-version = "0.0.1"
+dynamic = ["version"]
 description = "variable length spatial index - encode arbitary length bytes in nifti + data sidecar file"
-authors = [
-    {name = "INM1-BDA", email = "inm1-bda@fz-juelich.de"}
-]
+authors = [{ name = "INM1-BDA", email = "inm1-bda@fz-juelich.de" }]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
 ]
-dependencies = [
-    "nibabel",
-]
+dependencies = ["nibabel"]
 
 [project.optional-dependencies]
 dev = ["pytest", "flake8", "pylint", "requests", "Flake8-pyproject"]
@@ -28,18 +24,21 @@ dev = ["pytest", "flake8", "pylint", "requests", "Flake8-pyproject"]
 [project.urls]
 Homepage = "https://github.com/fzj-inm1-bda/vlsi"
 
-[tool.setuptools]
-packages = ["vlsi"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vlsi*"]
+
+[tool.setuptools_scm]
+write_to = "ebrains_drive/_version.py"
+
 
 [tool.black]
 line-length = 88
-target-version = ["py39"]
+target-version = ["py310"]
 
 
 [tool.flake8]
-per-file-ignores = [
-    "__init__.py:F401,E402",
-]
+per-file-ignores = ["__init__.py:F401,E402"]
 # Ignoring:
 # E501: line too long
 # W503: Line break occurred before a binary operator https://www.flake8rules.com/rules/W503.html
@@ -53,8 +52,4 @@ ignore = [
     "W503", # Line break before binary operator (handled by Black)
     "E731", # Unused import
 ]
-exclude = [
-    "venv",
-    ".git",
-    "__pycache__"
-]
+exclude = ["venv", ".git", "__pycache__"]
