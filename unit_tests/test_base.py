@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from vlsi import SpatialIndex
+from vlsi import ReadableSpatialIndex
 
-validate_pos = SpatialIndex.validate_pos
+validate_pos = ReadableSpatialIndex.validate_pos
 
 # Parametrized test cases for valid inputs
 @pytest.mark.parametrize(
