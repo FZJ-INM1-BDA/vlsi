@@ -5,17 +5,18 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vlsi"
 version = "0.0.1"
-description = "variable length spatial index"
+description = "variable length spatial index - encode arbitary length bytes in nifti + data sidecar file"
 authors = [
-    {name = "Xiao Gui", email = "xgui3783@gmail.com"}
+    {name = "INM1-BDA", email = "inm1-bda@fz-juelich.de"}
 ]
-# license = {text = "MIT"}
+license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
 ]
 dependencies = [
     "nibabel",
@@ -24,8 +25,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest", "flake8", "pylint", "requests", "Flake8-pyproject"]
 
-# [project.urls]
-# Homepage = "https://github.com/xgui3783/vlsi"
+[project.urls]
+Homepage = "https://github.com/fzj-inm1-bda/vlsi"
 
 [tool.setuptools]
 packages = ["vlsi"]

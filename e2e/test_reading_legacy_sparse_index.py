@@ -95,18 +95,6 @@ def remote_spatial_index():
     yield ReadableSpatialIndex(url, reader_read=reader_read)
 
 
-# jba30_colin_args = [
-#     ([72, 142, 119], {
-#         'Area OP3 (POperc) - left hemisphere': 0.0003129999968223274,
-#         'Area OP4 (POperc) - left hemisphere': 0.3191109895706177,
-#         'Area Op5 (Frontal Operculum) - left hemisphere': 0.28016701340675354, 'Area Op6 (Frontal Operculum) - left hemisphere': 9.999999974752427e-07, 'Area TE 1.0 (HESCHL) - left hemisphere': 0.0006760000251233578, 'Area TE 1.2 (HESCHL) - left hemisphere': 0.3054789900779724, 'Area TE 2.1 (STG) - left hemisphere': 0.0942310020327568, 'Area TE 3 (STG) - left hemisphere': 2.099999983329326e-05
-#     }),
-#     ([136, 216, 111], {
-#         'Area Fp1 (FPole) - right hemisphere': 0.3991990089416504,
-#         'Area Fp2 (FPole) - right hemisphere': 0.08381400257349014
-#     })
-# ]
-
 jba30_colin_args = [
     (
         [72, 142, 119],
@@ -138,11 +126,8 @@ jba30_colin_args = [
     "pos, expected",
     [
         *[
-            pytest.param(
-                [p],
-                [ex],
-                id=f"single-pos-idx-{idx}"
-            )for idx, (p, ex) in enumerate(jba30_colin_args)
+            pytest.param([p], [ex], id=f"single-pos-idx-{idx}")
+            for idx, (p, ex) in enumerate(jba30_colin_args)
         ],
         pytest.param(
             [arg[0] for arg in jba30_colin_args],
@@ -161,11 +146,8 @@ def test_local_legacy_spatial_indices(
     "pos, expected",
     [
         *[
-            pytest.param(
-                [p],
-                [ex],
-                id=f"single-pos-idx-{idx}"
-            )for idx, (p, ex) in enumerate(jba30_colin_args)
+            pytest.param([p], [ex], id=f"single-pos-idx-{idx}")
+            for idx, (p, ex) in enumerate(jba30_colin_args)
         ],
         pytest.param(
             [arg[0] for arg in jba30_colin_args],

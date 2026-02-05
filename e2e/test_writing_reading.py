@@ -395,6 +395,8 @@ def local_file():
             fp.write(resp.content)
 
     with TemporaryDirectory() as _dir:
+        affine = None
+        shape = None
 
         filenames = [
             (Path(_dir) / _encode_regionname(rname)).with_suffix(".nii.gz")
@@ -416,6 +418,16 @@ def local_file():
         for f in filenames:
             encoded_rname = f.name.removesuffix(".nii.gz")
             nii: nib.Nifti1Image = nib.load(f)
+
+            if affine is None:
+                affine = nii.affine
+            else:
+                assert np.all(affine == nii.affine)
+            
+            if shape is None:
+                shape = nii.shape
+            else:
+                assert shape == nii.shape
         
             imgdata = np.asanyarray(nii.dataobj)
             X, Y, Z = [v.astype("int32") for v in np.where(imgdata > 0)]
@@ -426,7 +438,7 @@ def local_file():
             ]
             writable_idx.write(list(zip(X, Y, Z)), data)
 
-        writable_idx.save()
+        writable_idx.save(affine=affine, shape=shape)
         yield idx_name
 
 jba30_colin_args = [

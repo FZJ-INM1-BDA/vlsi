@@ -1,16 +1,6 @@
 from pathlib import Path
-from typing import Union, Literal, ContextManager, Callable
-from collections import defaultdict
-from collections.abc import Iterable
-import gzip
-from io import BufferedReader
-
+from typing import Union, Literal
 import numpy as np
-import nibabel as nib
-
-
-class SpatialIndexWriteExc(Exception):
-    pass
 
 
 class SpatialIndex:
@@ -100,7 +90,7 @@ class SpatialIndex:
         """
         raise NotImplementedError
 
-    def save(self, affine=np.eye(4)):
+    def save(self, affine=np.eye(4), shape: tuple[int, int, int] = None):
         """Save the in memory spatial index data to on disk files.
 
         Parameters
@@ -114,125 +104,8 @@ class SpatialIndex:
         SpatialIndexWriteExc
             If either the voxel file or attribute file already exists,
             or if the total byte size of all attribute data exceeds `uint32`.
+            or if the index is already closed (saved)
         NotImplementedError
             If the SpatialIndex is not writable
         """
         raise NotImplementedError
-
-
-class WritableSpatialIndex(SpatialIndex):
-
-    writable = True
-
-    _buffer: dict[tuple[int, int, int], list[bytes]] = defaultdict(list)
-
-    def __init__(self, filepath, mode="w"):
-        super().__init__(filepath, mode)
-
-    def write(self, pos, data):
-        pos = self.validate_pos(pos)
-        assert isinstance(
-            data, Iterable
-        ), f"Expecting data to be instance of Iterable, but was not: data={data}"
-        for p, datum in zip(pos.tolist(), data):
-            assert isinstance(
-                datum, bytes
-            ), f"Expecting datum to be of type bytes, but was not: datum={datum}"
-            self._buffer[tuple(p)].append(datum)
-
-    def save(self, affine=np.eye(4)):
-        voxel_file = str(self.filepath) + self.VOXEL_SUFFIX
-        attr_file = str(self.filepath) + self.ATTR_SUFFIX
-
-        if Path(voxel_file).exists():
-            raise SpatialIndexWriteExc(
-                f"File {voxel_file} already exist. Flushing incomplete files not yet supported"
-            )
-
-        if Path(attr_file).exists():
-            raise SpatialIndexWriteExc(
-                f"File {attr_file} already exist. Flushing incomplete files not yet supported"
-            )
-
-        total_bytes = 0
-        for arrbytes in self._buffer.values():
-            for b in arrbytes:
-                total_bytes += len(b)
-
-        if total_bytes > self.UINT32_MAX:
-            raise SpatialIndexWriteExc(
-                "Spatial index data > uint32max. Currently not supported"
-            )
-
-        X, Y, Z = np.array(list(self._buffer.keys())).T
-
-        # shape needs to be 1 + max index
-        arr = np.zeros((np.max(X) + 1, np.max(Y) + 1, np.max(Z) + 1), dtype=np.uint64)
-        _offset_counter = 0
-        _towritearr = []
-
-        for key, value in self._buffer.items():
-            _towrite = b"".join(value)
-
-            # as amazing it appears, bitshift has lower priority than addition
-            # e.g. python -c "print(1 << 1 + 1)" prints 4, rather than 3
-            arr[key] = np.uint64((_offset_counter << 32) + len(_towrite))
-
-            _offset_counter += len(_towrite)
-            _towritearr.append(_towrite)
-
-        # needs to explicitly specify uint64 dtype
-        img = nib.Nifti1Image(arr, affine=affine, dtype=np.uint64)
-        nib.save(img, voxel_file)
-
-        with open(attr_file, "wb") as fp:
-            fp.write(b"".join(_towritearr))
-
-
-class ReadableSpatialIndex(SpatialIndex):
-
-    readable = True
-
-    def __init__(
-        self,
-        filepath,
-        mode="r",
-        *,
-        reader_read: Callable[[str], ContextManager[BufferedReader]] = lambda p: open(
-            p, mode="rb"
-        ),
-    ):
-        super().__init__(filepath, mode)
-
-        self.reader_read = reader_read
-
-        voxel_filepath = str(self.filepath) + self.VOXEL_SUFFIX
-        with self.reader_read(voxel_filepath) as fp:
-            voxel_file_bytes = fp.read(-1)
-            try:
-                voxel_file_bytes = gzip.decompress(voxel_file_bytes)
-            except gzip.BadGzipFile:
-                ...
-            nii = nib.Nifti1Image.from_bytes(voxel_file_bytes)
-
-        self.dataobj = np.array(nii.dataobj)
-        assert (
-            nii.get_data_dtype() == np.uint64
-        ), f"Expected to be of type uint64, but was {nii.get_data_dtype()}"
-
-    def read(self, pos):
-        pos = self.validate_pos(pos)
-        x, y, z = pos.T
-
-        result = []
-
-        with self.reader_read(str(self.filepath) + self.ATTR_SUFFIX) as reader:
-            for val in self.dataobj[x, y, z].tolist():
-                offset = val >> 32
-                bytes_to_read = val & self.UINT32_MAX
-                reader.seek(int(offset))
-                decoded = reader.read(int(bytes_to_read))
-                if len(decoded) == 0:
-                    continue
-                result.append(decoded)
-            return result

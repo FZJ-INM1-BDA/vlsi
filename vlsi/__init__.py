@@ -1,6 +1,2 @@
-from .base import (
-    WritableSpatialIndex,
-    SpatialIndex,
-    ReadableSpatialIndex,
-    SpatialIndexWriteExc,
-)
+from .readable import ReadableSpatialIndex
+from .writable import WritableSpatialIndex, SpatialIndexWriteExc
