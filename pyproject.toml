@@ -29,7 +29,7 @@ where = ["."]
 include = ["vlsi*"]
 
 [tool.setuptools_scm]
-write_to = "ebrains_drive/_version.py"
+write_to = "vlsi/_version.py"
 
 
 [tool.black]
