@@ -377,6 +377,7 @@ def _encode_data(encoded_rname: str, prob: float):
     # 6 bytes + 4 bytes
     return b + struct.pack("<f", prob)
 
+
 def _decode_data(b: bytes):
     assert len(b) == 10
     return b[:6].decode("utf-8"), struct.unpack("<f", b[6:10])[0]
@@ -387,7 +388,7 @@ def local_file():
 
     name = "foo"
     sess = requests.Session()
-    
+
     def _download(url: str, dest: Union[str, Path]):
         resp = sess.get(url)
         resp.raise_for_status()
@@ -403,14 +404,8 @@ def local_file():
             for rname in colin27_jba30_hg_maps.keys()
         ]
         with ThreadPoolExecutor() as ex:
-            list(
-                ex.map(
-                    _download,
-                    colin27_jba30_hg_maps.values(),
-                    filenames
-                )
-            )
-        
+            list(ex.map(_download, colin27_jba30_hg_maps.values(), filenames))
+
         idx_name = Path(_dir) / name
 
         writable_idx = WritableSpatialIndex(idx_name)
@@ -423,12 +418,12 @@ def local_file():
                 affine = nii.affine
             else:
                 assert np.all(affine == nii.affine)
-            
+
             if shape is None:
                 shape = nii.shape
             else:
                 assert shape == nii.shape
-        
+
             imgdata = np.asanyarray(nii.dataobj)
             X, Y, Z = [v.astype("int32") for v in np.where(imgdata > 0)]
 
@@ -440,6 +435,7 @@ def local_file():
 
         writable_idx.save(affine=affine, shape=shape)
         yield idx_name
+
 
 jba30_colin_args = [
     (
@@ -453,7 +449,7 @@ jba30_colin_args = [
             "749a1e": 0.3054789900779724,
             "ef6127": 0.0942310020327568,
             "1f3c97": 2.099999983329326e-05,
-        }
+        },
     ),
     (
         [136, 216, 111],
@@ -466,11 +462,8 @@ jba30_colin_args = [
     "pos, expected",
     [
         *[
-            pytest.param(
-                [p],
-                [ex],
-                id=f"single-pos-idx-{idx}"
-            )for idx, (p, ex) in enumerate(jba30_colin_args)
+            pytest.param([p], [ex], id=f"single-pos-idx-{idx}")
+            for idx, (p, ex) in enumerate(jba30_colin_args)
         ],
         pytest.param(
             [arg[0] for arg in jba30_colin_args],
@@ -487,7 +480,7 @@ def test_written_spatial_index(pos, expected, local_file: Path):
     assert len(expected) == len(lb)
 
     for b, ex in zip(lb, expected):
-        assert len(b) % 10 == 0, f"expecting multiple of exactly 10 bytes"
+        assert len(b) % 10 == 0, "expecting multiple of exactly 10 bytes"
         decoded_d = {}
         while len(b) > 0:
             _b = b[:10]
