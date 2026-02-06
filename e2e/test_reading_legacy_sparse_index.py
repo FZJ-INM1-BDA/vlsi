@@ -9,6 +9,7 @@ from typing import Union
 import requests
 
 from vlsi import ReadableSpatialIndex
+from vlsi.base import V0SpatialIndex
 
 url = "https://data-proxy.ebrains.eu/api/v1/buckets/reference-atlas-data/sparse-indices/colin27-jba30-hg"
 
@@ -33,13 +34,13 @@ def local_si_name():
                     download,
                     [
                         url,
-                        url + ".sparseindex.voxel.nii.gz",
-                        url + ".sparseindex.probs.txt",
+                        url + V0SpatialIndex.VOXEL_SUFFIX,
+                        url + V0SpatialIndex.ATTR_SUFFIX,
                     ],
                     [
                         fname,
-                        fname.with_suffix(ReadableSpatialIndex.VOXEL_SUFFIX),
-                        fname.with_suffix(ReadableSpatialIndex.ATTR_SUFFIX),
+                        fname.with_suffix(V0SpatialIndex.VOXEL_SUFFIX),
+                        fname.with_suffix(V0SpatialIndex.ATTR_SUFFIX),
                     ],
                 )
             )
@@ -59,18 +60,9 @@ def remote_spatial_index():
         def __init__(self, path: str):
             self.marker = 0
             self.session = requests.Session()
-            if path == url:
-                self.url = path
-                return
-            if path == url + ReadableSpatialIndex.VOXEL_SUFFIX:
-                self.url = url + ".sparseindex.voxel.nii.gz"
-                return
-            if path == url + ReadableSpatialIndex.ATTR_SUFFIX:
-                self.url = url + ".sparseindex.probs.txt"
-                return
-            raise Exception(f"{path}")
+            self.url = path
 
-        def read(self, bytes):
+        def read(self, bytes=-1):
 
             if bytes == -1:
                 resp = self.session.get(self.url)

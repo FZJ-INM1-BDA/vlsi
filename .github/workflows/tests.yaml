@@ -56,8 +56,11 @@ jobs:
       - name: "Run e2e tests"
         run: pytest e2e/test_reading*
 
+  # e2e writeread is intensive task (~2h to complete)
+  # only run if push to main
   e2e_writeread:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -68,4 +71,4 @@ jobs:
         run: |
           pip install .[dev]
       - name: "Run e2e tests"
-        run: pytest e2e/test_writing_reading.py*
+        run: pytest e2e/test_writing_reading.py

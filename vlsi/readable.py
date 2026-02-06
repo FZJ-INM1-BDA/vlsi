@@ -5,7 +5,7 @@ from io import BufferedReader
 import numpy as np
 import nibabel as nib
 
-from .base import SpatialIndex
+from .base import SpatialIndex, V0SpatialIndex
 
 
 class ReadableSpatialIndex(SpatialIndex):
@@ -23,6 +23,13 @@ class ReadableSpatialIndex(SpatialIndex):
         super().__init__(filepath, mode="r")
 
         self.reader_read = reader_read
+
+        with self.reader_read(filepath) as fp:
+            meta = fp.read().decode()
+
+        if meta.startswith(V0SpatialIndex.HEADER):
+            self.VOXEL_SUFFIX = V0SpatialIndex.VOXEL_SUFFIX
+            self.ATTR_SUFFIX = V0SpatialIndex.ATTR_SUFFIX
 
         voxel_filepath = str(self.filepath) + self.VOXEL_SUFFIX
         with self.reader_read(voxel_filepath) as fp:

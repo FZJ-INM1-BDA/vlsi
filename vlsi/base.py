@@ -2,6 +2,11 @@ from pathlib import Path
 from typing import Union, Literal
 import numpy as np
 
+class V0SpatialIndex:
+    HEADER = """SPARSEINDEX-UTF8-V0"""
+    VOXEL_SUFFIX = ".sparseindex.voxel.nii.gz"
+    ATTR_SUFFIX = ".sparseindex.probs.txt"
+
 
 class SpatialIndex:
 
