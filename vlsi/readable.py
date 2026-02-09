@@ -38,12 +38,16 @@ class ReadableSpatialIndex(SpatialIndex):
                 voxel_file_bytes = gzip.decompress(voxel_file_bytes)
             except gzip.BadGzipFile:
                 ...
-            nii = nib.Nifti1Image.from_bytes(voxel_file_bytes)
+            self._nii = nib.Nifti1Image.from_bytes(voxel_file_bytes)
 
-        self.dataobj = np.array(nii.dataobj)
+        self.dataobj = np.array(self._nii.dataobj)
         assert (
-            nii.get_data_dtype() == np.uint64
-        ), f"Expected to be of type uint64, but was {nii.get_data_dtype()}"
+            self._nii.get_data_dtype() == np.uint64
+        ), f"Expected to be of type uint64, but was {self._nii.get_data_dtype()}"
+
+    @property
+    def affine(self):
+        return self._nii.affine
 
     def read(self, pos):
         pos = self.validate_pos(pos)
