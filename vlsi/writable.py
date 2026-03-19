@@ -6,6 +6,7 @@ import numpy as np
 import nibabel as nib
 
 from .base import SpatialIndex
+from .util import logger
 
 
 class SpatialIndexWriteExc(Exception):
@@ -79,23 +80,27 @@ class WritableSpatialIndex(SpatialIndex):
         # shape needs to be 1 + max index
         arr = np.zeros(shape, dtype=np.uint64)
         _offset_counter = 0
-        _totalbuff: bytes = b""
 
-        for key, _towrite in self._buffer.items():
+        total_count = len(self._buffer)
+        logger.debug(f"Total buffer items: {total_count}")
+        with open(attr_file, "wb") as fp:
 
-            # as amazing it appears, bitshift has lower priority than addition
-            # e.g. python -c "print(1 << 1 + 1)" prints 4, rather than 3
-            arr[key] = np.uint64((_offset_counter << 32) + len(_towrite))
+            for idx, (key, _towrite) in enumerate(self._buffer.items()):
+                if idx % 10 == 0:
+                    logger.debug(
+                        f"Progress: {idx} / {total_count} (updated every 10 items)"
+                    )
 
-            _offset_counter += len(_towrite)
-            _totalbuff += _towrite
+                # as amazing it appears, bitshift has lower priority than addition
+                # e.g. python -c "print(1 << 1 + 1)" prints 4, rather than 3
+                arr[key] = np.uint64((_offset_counter << 32) + len(_towrite))
+
+                _offset_counter += len(_towrite)
+                fp.write(_towrite)
 
         # needs to explicitly specify uint64 dtype
         img = nib.Nifti1Image(arr, affine=affine, dtype=np.uint64)
         nib.save(img, voxel_file)
-
-        with open(attr_file, "wb") as fp:
-            fp.write(_totalbuff)
 
         with open(manifestfile_file, "wb") as fp:
             fp.write(self.HEADER.encode("utf-8"))

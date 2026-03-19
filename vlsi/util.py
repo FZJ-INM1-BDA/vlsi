@@ -1,3 +1,5 @@
+import logging
+
 SEP = b"\x00"
 
 
@@ -49,3 +51,5 @@ def decode_data(buf: bytes):
     """
     assert buf[-1] == SEP
     return buf.split(SEP)[:-1]
+
+logger = logging.getLogger(__name__)
