@@ -17,10 +17,11 @@ def encode_data(bufs: list[bytes]):
     bytes
         Encoded byte string with SEP separators between buffers and a trailing SEP.
     """
-    return SEP.join(bufs) + SEP
+    return b"".join(encode_datum(b) for b in bufs)
 
 
 def encode_datum(buf: bytes):
+    assert SEP not in buf, f"Cannot encode \\x00, as it is used as a separator"
     return buf + SEP
 
 
@@ -49,8 +50,8 @@ def decode_data(buf: bytes):
     >>> decode_data(data)
     [b'', b'abc', b'def']
     """
-    assert buf[-1] == SEP
-    return buf.split(SEP)[:-1]
+    buf = buf.removesuffix(SEP)
+    return buf.split(SEP)
 
 
 logger = logging.getLogger(__name__)
