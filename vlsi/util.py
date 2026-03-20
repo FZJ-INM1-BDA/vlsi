@@ -21,7 +21,7 @@ def encode_data(bufs: list[bytes]):
 
 
 def encode_datum(buf: bytes):
-    assert SEP not in buf, f"Cannot encode \\x00, as it is used as a separator"
+    assert SEP not in buf, "Cannot encode \\x00, as it is used as a separator"
     return buf + SEP
 
 
