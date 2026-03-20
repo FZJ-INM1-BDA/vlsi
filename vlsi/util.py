@@ -1,6 +1,9 @@
 import logging
+from hashlib import md5
 
 SEP = b"\x00"
+ALIAS_SUFFIX = ".spatialindex.alias.json"
+V0_ALIAS_SUFFIX = ".sparseindex.alias.json"
 
 
 def encode_data(bufs: list[bytes]):
@@ -55,3 +58,7 @@ def decode_data(buf: bytes):
 
 
 logger = logging.getLogger(__name__)
+
+
+def encode_label(rname: str):
+    return md5(rname.encode()).hexdigest()[:6]

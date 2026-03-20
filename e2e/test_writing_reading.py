@@ -7,10 +7,12 @@ from concurrent.futures import ThreadPoolExecutor
 import struct
 
 import requests
-import nibabel as nib
-import numpy as np
 
-from vlsi import WritableSpatialIndex, ReadableSpatialIndex
+from vlsi import (
+    ReadableSpatialIndex,
+    create_sparseindex,
+    ReadableSparseIndex,
+)
 
 # extracted from siibra-configuration a281669d824037973aedaf2a3b625c38bcf5ba86 (from jugit)
 colin27_jba30_hg_maps = {
@@ -396,8 +398,6 @@ def local_file():
             fp.write(resp.content)
 
     with TemporaryDirectory() as _dir:
-        affine = None
-        shape = None
 
         filenames = [
             (Path(_dir) / _encode_regionname(rname)).with_suffix(".nii.gz")
@@ -408,38 +408,17 @@ def local_file():
 
         idx_name = Path(_dir) / name
 
-        writable_idx = WritableSpatialIndex(idx_name)
-
-        for f in filenames:
-            encoded_rname = f.name.removesuffix(".nii.gz")
-            nii: nib.Nifti1Image = nib.load(f)
-
-            if affine is None:
-                affine = nii.affine
-            else:
-                assert np.all(affine == nii.affine)
-
-            if shape is None:
-                shape = nii.shape
-            else:
-                assert shape == nii.shape
-
-            imgdata = np.asanyarray(nii.dataobj)
-            X, Y, Z = [v.astype("int32") for v in np.where(imgdata > 0)]
-
-            data = [
-                _encode_data(encoded_rname, prob)
-                for x, y, z, prob in zip(X, Y, Z, imgdata[X, Y, Z])
-            ]
-            writable_idx.write(list(zip(X, Y, Z)), data)
-
-        writable_idx.save(affine=affine, shape=shape)
+        label_to_f32_nii = {
+            rname: (Path(_dir) / _encode_regionname(rname)).with_suffix(".nii.gz")
+            for rname in colin27_jba30_hg_maps.keys()
+        }
+        create_sparseindex(label_to_f32_nii, idx_name)
         yield idx_name
 
 
 jba30_colin_args = [
     (
-        [72, 142, 119],
+        [-56.0, -6.0, 9],
         {
             "d35d2d": 0.0003129999968223274,
             "c4d406": 0.3191109895706177,
@@ -452,7 +431,7 @@ jba30_colin_args = [
         },
     ),
     (
-        [136, 216, 111],
+        [8.0, 68.0, 1.0],
         {"a72203": 0.3991990089416504, "ab1fe3": 0.08381400257349014},
     ),
 ]
@@ -490,3 +469,46 @@ def test_written_spatial_index(pos, expected, local_file: Path):
             b = b[10:]
 
         assert decoded_d == ex
+
+
+jba30_colin_rname_args = [
+    (
+        [-56.0, -6.0, 9],
+        {
+            "Area OP3 (POperc) - left hemisphere": 0.0003129999968223274,
+            "Area OP4 (POperc) - left hemisphere": 0.3191109895706177,
+            "Area Op5 (Frontal Operculum) - left hemisphere": 0.28016701340675354,
+            "Area Op6 (Frontal Operculum) - left hemisphere": 9.999999974752427e-07,
+            "Area TE 1.0 (HESCHL) - left hemisphere": 0.0006760000251233578,
+            "Area TE 1.2 (HESCHL) - left hemisphere": 0.3054789900779724,
+            "Area TE 2.1 (STG) - left hemisphere": 0.0942310020327568,
+            "Area TE 3 (STG) - left hemisphere": 2.099999983329326e-05,
+        },
+    ),
+    (
+        [8.0, 68.0, 1.0],
+        {
+            "Area Fp1 (FPole) - right hemisphere": 0.3991990089416504,
+            "Area Fp2 (FPole) - right hemisphere": 0.08381400257349014,
+        },
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "pos, expected",
+    [
+        *[
+            pytest.param([p], [ex], id=f"single-pos-idx-{idx}")
+            for idx, (p, ex) in enumerate(jba30_colin_rname_args)
+        ],
+        pytest.param(
+            [arg[0] for arg in jba30_colin_rname_args],
+            [arg[1] for arg in jba30_colin_rname_args],
+            id="merged-array",
+        ),
+    ],
+)
+def test_reading_sparse_index(pos, expected, local_file: Path):
+    idx = ReadableSparseIndex(local_file)
+    assert idx.read_and_parse(pos) == expected

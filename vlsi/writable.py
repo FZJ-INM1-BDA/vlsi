@@ -1,12 +1,14 @@
 from pathlib import Path
 from collections import defaultdict
 from collections.abc import Iterable
+import json
+import struct
 
 import numpy as np
 import nibabel as nib
 
 from .base import SpatialIndex
-from .util import logger
+from .util import logger, ALIAS_SUFFIX, encode_label
 
 
 class SpatialIndexWriteExc(Exception):
@@ -105,3 +107,56 @@ class WritableSpatialIndex(SpatialIndex):
         with open(manifestfile_file, "wb") as fp:
             fp.write(self.HEADER.encode("utf-8"))
         self.closed = True
+
+
+def create_sparseindex(label_to_f32nii: dict[str, str], fname: str):
+    fname = str(fname)
+    writable_idx = WritableSpatialIndex(fname)
+    if Path(f"{fname}{writable_idx.VOXEL_SUFFIX}").exists():
+        logger.warning("Already exists... exit...")
+        return
+
+    alias_to_nii = {
+        encode_label(label): niipath for label, niipath in label_to_f32nii.items()
+    }
+
+    for label in alias_to_nii.keys():
+        assert len(label) == 6, f"Expecting len 6 for all keys, {label=} is not"
+
+    affine = None
+    shape = None
+    total = len(alias_to_nii)
+    progress = 1
+    for label, niipath in alias_to_nii.items():
+        logger.debug(f"Processing {niipath} ({progress}/{total})")
+        nii: nib.Nifti1Image = nib.load(niipath)
+
+        if affine is None:
+            affine = nii.affine
+        else:
+            assert np.all(affine == nii.affine)
+
+        if shape is None:
+            shape = nii.shape
+        else:
+            assert shape == nii.shape
+        imgdata = np.asanyarray(nii.dataobj)
+
+        X, Y, Z = [v.astype(np.uint32) for v in np.where(imgdata > 0)]
+
+        data = [label.encode() + struct.pack("<f", prob) for prob in imgdata[X, Y, Z]]
+
+        writable_idx.write(list(zip(X, Y, Z)), data)
+        progress += 1
+
+    assert affine is not None
+    assert shape is not None
+
+    logger.debug("Saving ...")
+    writable_idx.save(affine, shape)
+    logger.debug("Finished save ...")
+
+    alias_to_label = {encode_label(label): label for label in label_to_f32nii.keys()}
+
+    with open(fname + ALIAS_SUFFIX, "w") as fp:
+        json.dump(alias_to_label, indent=2, fp=fp)
