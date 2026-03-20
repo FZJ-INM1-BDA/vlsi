@@ -8,7 +8,7 @@ import numpy as np
 import nibabel as nib
 
 from .base import SpatialIndex, V0SpatialIndex
-from .util import ALIAS_SUFFIX
+from .util import ALIAS_SUFFIX, V0_ALIAS_SUFFIX
 
 
 class ReadableSpatialIndex(SpatialIndex):
@@ -43,7 +43,7 @@ class ReadableSpatialIndex(SpatialIndex):
                 ...
             self._nii = nib.Nifti1Image.from_bytes(voxel_file_bytes)
 
-        self.dataobj = np.array(self._nii.dataobj)
+        self.dataobj = np.asarray(self._nii.dataobj)
         assert (
             self._nii.get_data_dtype() == np.uint64
         ), f"Expected to be of type uint64, but was {self._nii.get_data_dtype()}"
@@ -79,12 +79,30 @@ class ReadableSpatialIndex(SpatialIndex):
 class ReadableSparseIndex(ReadableSpatialIndex):
     def __init__(self, filepath, *, reader_read=lambda p: open(p, mode="rb")):
         super().__init__(filepath, reader_read=reader_read)
-        with reader_read(f"{filepath}{ALIAS_SUFFIX}") as fp:
-            self.alias_label = json.loads(fp.read())
+
+        with reader_read(filepath) as fp:
+            self.isv0 = fp.read().decode().startswith(V0SpatialIndex.HEADER)
+        if self.isv0:
+            with reader_read(f"{filepath}{V0_ALIAS_SUFFIX}") as fp:
+                v0alias = json.loads(fp.read())
+                self.alias_label = {
+                    alias: value.get("name", alias) for alias, value in v0alias.items()
+                }
+        else:
+            with reader_read(f"{filepath}{ALIAS_SUFFIX}") as fp:
+                self.alias_label = json.loads(fp.read())
 
     def read_and_parse(self, pos):
         result: list[dict[str, float]] = []
         for buf in self.read(pos):
+            if self.isv0:
+                payload: dict[str, float] = json.loads(buf)
+                payload = {
+                    self.alias_label.get(alias, alias): mapvalue
+                    for alias, mapvalue in payload.items()
+                }
+                result.append(payload)
+                continue
             assert (
                 len(buf) % 10 == 0
             ), f"Expected buf to be multiple of 10, but was {len(buf)}"

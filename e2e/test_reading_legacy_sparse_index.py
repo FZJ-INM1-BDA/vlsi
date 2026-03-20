@@ -8,7 +8,7 @@ from typing import Union
 
 import requests
 
-from vlsi import ReadableSpatialIndex
+from vlsi import ReadableSpatialIndex, ReadableSparseIndex, V0_ALIAS_SUFFIX
 from vlsi.base import V0SpatialIndex
 
 url = "https://data-proxy.ebrains.eu/api/v1/buckets/reference-atlas-data/sparse-indices/colin27-jba30-hg"
@@ -36,11 +36,13 @@ def local_si_name():
                         url,
                         url + V0SpatialIndex.VOXEL_SUFFIX,
                         url + V0SpatialIndex.ATTR_SUFFIX,
+                        url + V0_ALIAS_SUFFIX,
                     ],
                     [
                         fname,
                         fname.with_suffix(V0SpatialIndex.VOXEL_SUFFIX),
                         fname.with_suffix(V0SpatialIndex.ATTR_SUFFIX),
+                        fname.with_suffix(V0_ALIAS_SUFFIX),
                     ],
                 )
             )
@@ -51,6 +53,11 @@ def local_si_name():
 @pytest.fixture(scope="session")
 def local_spatial_index(local_si_name):
     yield ReadableSpatialIndex(str(local_si_name))
+
+
+@pytest.fixture(scope="session")
+def local_sparse_index(local_si_name):
+    yield ReadableSparseIndex(str(local_si_name))
 
 
 @pytest.fixture(scope="session")
@@ -89,7 +96,7 @@ def remote_spatial_index():
 
 jba30_colin_args = [
     (
-        [72, 142, 119],
+        [-56.0, -6.0, 9],
         json.dumps(
             {
                 "d35d2d": 0.0003129999968223274,
@@ -105,7 +112,7 @@ jba30_colin_args = [
         + b"\n",
     ),
     (
-        [136, 216, 111],
+        [8.0, 68.0, 1.0],
         json.dumps(
             {"a72203": 0.3991990089416504, "ab1fe3": 0.08381400257349014}
         ).encode("utf-8")
@@ -132,6 +139,48 @@ def test_local_legacy_spatial_indices(
     pos, expected, local_spatial_index: ReadableSpatialIndex
 ):
     assert local_spatial_index.read(pos) == expected
+
+
+jba30_colin_fullanme_args = [
+    (
+        [-56.0, -6.0, 9],
+        {
+            "Area OP3 (POperc) - left hemisphere": 0.0003129999968223274,
+            "Area OP4 (POperc) - left hemisphere": 0.3191109895706177,
+            "Area Op5 (Frontal Operculum) - left hemisphere": 0.28016701340675354,
+            "Area Op6 (Frontal Operculum) - left hemisphere": 9.999999974752427e-07,
+            "Area TE 1.0 (HESCHL) - left hemisphere": 0.0006760000251233578,
+            "Area TE 1.2 (HESCHL) - left hemisphere": 0.3054789900779724,
+            "Area TE 2.1 (STG) - left hemisphere": 0.0942310020327568,
+            "Area TE 3 (STG) - left hemisphere": 2.099999983329326e-05,
+        },
+    ),
+    (
+        [8.0, 68.0, 1.0],
+        {
+            "Area Fp1 (FPole) - right hemisphere": 0.3991990089416504,
+            "Area Fp2 (FPole) - right hemisphere": 0.08381400257349014,
+        },
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "pos, expected",
+    [
+        *[
+            pytest.param([p], [ex], id=f"single-pos-idx-{idx}")
+            for idx, (p, ex) in enumerate(jba30_colin_fullanme_args)
+        ],
+        pytest.param(
+            [arg[0] for arg in jba30_colin_fullanme_args],
+            [arg[1] for arg in jba30_colin_fullanme_args],
+            id="merged-array",
+        ),
+    ],
+)
+def test_local_legacy_spatial_indices_fullname(pos, expected, local_sparse_index):
+    assert local_sparse_index.read_and_parse(pos) == expected
 
 
 @pytest.mark.parametrize(
