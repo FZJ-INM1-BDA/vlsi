@@ -4,11 +4,15 @@ Variable-Length-Spatial-Index (or velvet-silk) is an implementation of variable 
 
 ## Background
 
-see [background.md](./background.md)
+see [specifications/background.md](specifications/background.md)
 
-## Specification
+## Base Specification
 
-see [specifications.md](./specifications.md)
+see [specifications/v1.md](specifications/v1.md)
+
+## Sparse Index Specification
+
+A specification built on the basis of the base specification. See [specifications/sparse_index_v1.md](specifications/sparse_index_v1.md)
 
 ## Usages
 
