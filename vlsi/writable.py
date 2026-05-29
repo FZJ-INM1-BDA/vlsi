@@ -66,7 +66,7 @@ class WritableSpatialIndex(SpatialIndex):
             )
 
         X, Y, Z = np.array(list(self._buffer.keys())).T
-        minshape = np.array([(np.max(X) + 1, np.max(Y) + 1, np.max(Z) + 1)])
+        minshape = np.array((np.max(X) + 1, np.max(Y) + 1, np.max(Z) + 1))
 
         if shape:
             shape = np.array(shape)
